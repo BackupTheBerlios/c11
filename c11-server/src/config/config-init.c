@@ -29,15 +29,44 @@
 #include <config/config.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <slang.h>
 
+
+/*
+ *The cfgfile should first be tried to be fetched from the user's home directory
+ *then in the environment variable C11CFG and finally
+ *"/etc"
+ */
+
 int c11_config_init(void)
-{
+{      // char *source_etc=NULL;
+
+        int ret;
 	char *cfgfile=NULL;
 	void *foo=NULL;
 	const char *usrhome=getenv("HOME");
 
+	char *source_home=strcat(usrhome,"/.c11.conf");
+
+	//	fprintf(stderr, "source_home : %s\n", source_home);
+
+	if(!access(source_home, R_OK))
+          setenv("C11CFG", source_home, 1);
+	
+       
+	   else if(!access("/etc/c11.conf", R_OK))
+	   setenv("C11CFG", "/etc/c11.conf", 1); 
+
+	cfgfile=getenv("C11CFG");
+
+	if(cfgfile==NULL){
+	  fprintf(stderr, "C11CFG not set correctly! Perhaps you would like to create a c11.conf file first! Copy the c11.conf from data directory of c11-server root to your home directory and save it as .c11.conf. Alternatively just copy it to your /etc directory (must be root) or atleast set the variable C11CFG to point to your c11.conf location :)\n");
+	  exit(0);
+	}
+	
+/*
 	if((cfgfile=getenv("C11CFG"))==NULL)
 	{
 		if((cfgfile=malloc(sizeof(char)*(strlen(usrhome)+strlen(CONFIG_NAME)+2)))==NULL)
@@ -67,14 +96,15 @@ int c11_config_init(void)
 				return(0);
 			}
 		}
-	}
-	else
-	{
+		}*/
+       
+	
 		if(!cfg_open(cfgfile))
 			return(-1);
 		else
 			return(0);
-	}
+	
+
 	return(-1);
 }
 
